@@ -1,17 +1,26 @@
-# Tic-Tac-Toe Game Example
+Statement of Work
+Project Title: Jakes Hardcore Connect Four
+[Jakes Hardcore Connect Four]
 
-This is a simple Tic-Tac-Toe game implemented using Python and sockets.
+Team:
+[Jake S]
 
-**How to play:**
-1. **Start the server:** Run the `server.py` script.
-2. **Connect clients:** Run the `client.py` script on two different machines or terminals.
-3. **Play the game:** Players take turns entering their moves. The first player to get three in a row wins!
+Project Objective:
+[I personally am hoping to create a functional conntect four game.]
 
-**Technologies used:**
-* Python
-* Sockets
-
-**Additional resources:**
-* [Link to Python documentation]
-* [Link to sockets tutorial]
-    
+Scope:
+Inclusions:
+[Connect four tiles in a row, or diagnoally to win!]
+Exclusions:
+[N/A at the moment]
+Deliverables:
+[N/A at the moment]
+Timeline:
+Key Milestones:
+Task Breakdown:
+Technical Requirements:
+Hardware:
+Software:
+Assumptions:
+Roles and Responsibilities:
+I, Jake Sherman will be taking on all roles and responsibilities.
