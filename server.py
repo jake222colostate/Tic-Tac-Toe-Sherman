@@ -1,35 +1,41 @@
-
 import socket
 import threading
-import logging
+import json
 
-logging.basicConfig(level=logging.INFO)
+HOST = '127.0.0.1'
+PORT = 65432 
 
-def handle_client(client_socket, address):
-    logging.info(f"Connected to {address}")
+clients = []
+
+def handle_client(conn, addr):
+    print(f"Connected by {addr}")
+    clients.append(conn)
     try:
         while True:
-            message = client_socket.recv(1024).decode()
-            if not message:
+            data = conn.recv(1024)
+            if not data:
                 break
-            logging.info(f"Received from {address}: {message}")
-            client_socket.send("Message received".encode())
-    except Exception as e:
-        logging.error(f"Error with {address}: {e}")
+            message = json.loads(data.decode())
+            print(f"Received message from {addr}: {message}")
+            for client in clients:
+                if client != conn:
+                    client.sendall(data)
+    except (ConnectionResetError, json.JSONDecodeError):
+        print(f"Connection lost with {addr}")
     finally:
-        logging.info(f"Disconnected from {address}")
-        client_socket.close()
+        print(f"Disconnected from {addr}")
+        clients.remove(conn)
+        conn.close()
 
-def start_server():
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('localhost', 12345))
-    server_socket.listen(5)
-    logging.info("Server listening on port 12345")
-
-    while True:
-        client_socket, address = server_socket.accept()
-        client_thread = threading.Thread(target=handle_client, args=(client_socket, address))
-        client_thread.start()
+def main():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind((HOST, PORT))
+        s.listen()
+        print(f"Server listening on {HOST}:{PORT}")
+        while True:
+            conn, addr = s.accept()
+            print(f"Accepted connection from {addr}")
+            threading.Thread(target=handle_client, args=(conn, addr)).start()
 
 if __name__ == "__main__":
-    start_server()
+    main()

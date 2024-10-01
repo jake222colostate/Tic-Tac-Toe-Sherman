@@ -1,37 +1,42 @@
 import socket
-import logging
+import json
+import threading
 
-logging.basicConfig(level=logging.INFO)
+HOST = '127.0.0.1'
+PORT = 65432
 
-def communicate_with_server(client_socket):
-    try:
-        while True:
-            message = input("Enter message to send to server: ")
-            if message.lower() == 'exit':
+def send_message(sock):
+    while True:
+        message = input("Enter message: ")
+        try:
+            sock.sendall(json.dumps({"message": message}).encode())
+        except BrokenPipeError:
+            print("Failed to send message. Connection lost.")
+            break
+
+def receive_message(sock):
+    while True:
+        try:
+            data = sock.recv(1024)
+            if data:
+                print(f"Received: {data.decode()}")
+            else:
                 break
-            client_socket.send(message.encode())
-            response = client_socket.recv(1024).decode()
-            logging.info(f"Server response: {response}")
-    except Exception as e:
-        logging.error(f"Communication error: {e}")
-    finally:
-        logging.info("Client disconnected")
-        client_socket.close()
+        except socket.error:
+            print("Error receiving data.")
+            break
 
-def start_client():
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+def main():
     try:
-        client_socket.connect(('localhost', 12345))
-        logging.info("Connected to server")
-        communicate_with_server(client_socket)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((HOST, PORT))
+            print(f"Connected to server at {HOST}:{PORT}")
+
+            threading.Thread(target=receive_message, args=(s,)).start()
+
+            send_message(s)
     except ConnectionRefusedError:
-        logging.error("Connection refused by the server")
-    except socket.timeout:
-        logging.error("Connection timed out")
-    except Exception as e:
-        logging.error(f"Connection failed: {e}")
-    finally:
-        client_socket.close()
+        print("Failed to connect to the server. Is it running?")
 
 if __name__ == "__main__":
-    start_client()
+    main()
