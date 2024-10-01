@@ -18,7 +18,6 @@ python client.py
 
 # Statement of Work
 ## Project Title: Jakes Hardcore Connect Four
-[Jakes Hardcore Connect Four]
 
 Team:
 [Jake S]
