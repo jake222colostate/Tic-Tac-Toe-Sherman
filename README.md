@@ -1,3 +1,21 @@
+### Message Structure
+- `{ "message": "some text" }`
+
+## Running the Server
+To start the server, run:
+```bash
+python server.py
+```
+
+## Running the Client
+To start the client, run:
+```bash
+python client.py
+```
+
+
+
+
 Statement of Work
 Project Title: Jakes Hardcore Connect Four
 [Jakes Hardcore Connect Four]
