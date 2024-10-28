@@ -1,41 +1,64 @@
 import socket
 import threading
 import json
+import uuid
 
 HOST = '127.0.0.1'
-PORT = 65432 
+PORT = 12345
+clients = {}
+game_state = {'board': [' ' for _ in range(9)], 'current_turn': None}
+running = True
 
-clients = []
+def broadcast_message(message):
+    for client in clients.values():
+        client.sendall(json.dumps(message).encode())
 
-def handle_client(conn, addr):
-    print(f"Connected by {addr}")
-    clients.append(conn)
+def handle_client(client_socket, client_id):
+    global game_state
     try:
-        while True:
-            data = conn.recv(1024)
-            if not data:
+        while running:
+            message = client_socket.recv(1024).decode()
+            if not message:
                 break
-            message = json.loads(data.decode())
-            print(f"Received message from {addr}: {message}")
-            for client in clients:
-                if client != conn:
-                    client.sendall(data)
-    except (ConnectionResetError, json.JSONDecodeError):
-        print(f"Connection lost with {addr}")
+            data = json.loads(message)
+            handle_message(data, client_socket, client_id)
+    except Exception as e:
+        print(f"Error: {e}")
     finally:
-        print(f"Disconnected from {addr}")
-        clients.remove(conn)
-        conn.close()
+        client_socket.close()
+        clients.pop(client_id, None)
+        broadcast_message({'type': 'disconnect', 'client_id': client_id})
+        print(f"Client {client_id} disconnected")
 
-def main():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((HOST, PORT))
-        s.listen()
-        print(f"Server listening on {HOST}:{PORT}")
-        while True:
-            conn, addr = s.accept()
-            print(f"Accepted connection from {addr}")
-            threading.Thread(target=handle_client, args=(conn, addr)).start()
+def handle_message(data, client_socket, client_id):
+    global game_state
+    pass
+
+def start_server():
+    global running
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind((HOST, PORT))
+    server_socket.listen()
+    print("Server started on port", PORT)
+
+    def accept_clients():
+        while running:
+            try:
+                client_socket, addr = server_socket.accept()
+                client_id = str(uuid.uuid4())
+                clients[client_id] = client_socket
+                print(f"Client {client_id} connected from {addr}")
+                threading.Thread(target=handle_client, args=(client_socket, client_id)).start()
+            except socket.error:
+                break
+
+    threading.Thread(target=accept_clients).start()
+
+    # Stop server on user input
+    input("Press Enter to stop the server...\n")
+    running = False
+    server_socket.close()
+    print("Server stopped.")
 
 if __name__ == "__main__":
-    main()
+    start_server()
