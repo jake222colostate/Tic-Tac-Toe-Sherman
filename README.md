@@ -12,7 +12,25 @@ To start the client, run:
 ```bash
 python client.py
 ```
+## Game Message Protocol
 
+### Message Types
+- **Join**: Sent when a player joins.
+  - `{'type': 'join', 'client_id': '<unique_client_id>'}`
+- **Move**: Sent when a player makes a move.
+  - `{'type': 'move', 'move': <board_index>}`
+- **Update**: Sent by the server to update game state.
+  - `{'type': 'update', 'game_state': <game_state_dict>}`
+- **Disconnect**: Notifies clients of player disconnection.
+  - `{'type': 'disconnect', 'client_id': '<unique_client_id>'}`
+
+### Game State Format
+- `game_state`: Contains the board and the current player’s turn:
+  ```python
+  game_state = {
+      'board': [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+      'current_turn': '<client_id>'
+  }
 
 
 
