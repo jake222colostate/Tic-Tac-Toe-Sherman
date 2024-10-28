@@ -1,42 +1,46 @@
 import socket
-import json
 import threading
+import json
 
-HOST = '127.0.0.1'
-PORT = 65432
+SERVER_HOST = '127.0.0.1'
+SERVER_PORT = 12345
 
-def send_message(sock):
-    while True:
-        message = input("Enter message: ")
-        try:
-            sock.sendall(json.dumps({"message": message}).encode())
-        except BrokenPipeError:
-            print("Failed to send message. Connection lost.")
-            break
-
-def receive_message(sock):
+def receive_messages(client_socket):
     while True:
         try:
-            data = sock.recv(1024)
-            if data:
-                print(f"Received: {data.decode()}")
-            else:
+            message = client_socket.recv(1024).decode()
+            if not message:
                 break
-        except socket.error:
-            print("Error receiving data.")
+            data = json.loads(message)
+            handle_server_message(data)
+        except Exception as e:
+            print(f"Error: {e}")
             break
 
-def main():
+def handle_server_message(data):
+    if data['type'] == 'update':
+        print("Game State Updated:", data['game_state'])
+    elif data['type'] == 'join':
+        print(f"New player joined: {data['client_id']}")
+    elif data['type'] == 'disconnect':
+        print(f"Player {data['client_id']} disconnected")
+
+def send_move(client_socket, move):
+    message = {'type': 'move', 'move': move}
+    client_socket.sendall(json.dumps(message).encode())
+
+def start_client():
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((SERVER_HOST, SERVER_PORT))
+    
+    threading.Thread(target=receive_messages, args=(client_socket,)).start()
+    
     try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((HOST, PORT))
-            print(f"Connected to server at {HOST}:{PORT}")
-
-            threading.Thread(target=receive_message, args=(s,)).start()
-
-            send_message(s)
-    except ConnectionRefusedError:
-        print("Failed to connect to the server. Is it running?")
+        while True:
+            move = input("Enter move (0-8): ")
+            send_move(client_socket, int(move))
+    except KeyboardInterrupt:
+        client_socket.close()
 
 if __name__ == "__main__":
-    main()
+    start_client()
