@@ -13,6 +13,24 @@ def broadcast_message(message):
     for client in clients.values():
         client.sendall(json.dumps(message).encode())
 
+def reset_game_state():
+    global game_state
+    game_state = {'board': [' ' for _ in range(9)], 'current_turn': None}
+
+def check_winner():
+    board = game_state['board']
+    win_conditions = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],  # Rows
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],  # Columns
+        [0, 4, 8], [2, 4, 6]              # Diagonals
+    ]
+    for condition in win_conditions:
+        if board[condition[0]] == board[condition[1]] == board[condition[2]] != ' ':
+            return board[condition[0]]
+    if ' ' not in board:
+        return 'Draw'
+    return None
+
 def handle_client(client_socket, client_id):
     global game_state
     try:
@@ -32,7 +50,22 @@ def handle_client(client_socket, client_id):
 
 def handle_message(data, client_socket, client_id):
     global game_state
-    pass
+    if data['type'] == 'move':
+        move = data['move']
+        if game_state['current_turn'] == client_id and game_state['board'][move] == ' ':
+            game_state['board'][move] = 'X' if client_id == list(clients.keys())[0] else 'O'
+            winner = check_winner()
+            if winner:
+                if winner == 'Draw':
+                    broadcast_message({'type': 'draw'})
+                else:
+                    broadcast_message({'type': 'winner', 'winner': client_id})
+                reset_game_state()
+            else:
+                game_state['current_turn'] = list(clients.keys())[1] if game_state['current_turn'] == list(clients.keys())[0] else list(clients.keys())[0]
+                broadcast_message({'type': 'update', 'game_state': game_state})
+        else:
+            client_socket.sendall(json.dumps({'type': 'error', 'message': 'Invalid move or not your turn.'}).encode())
 
 def start_server():
     global running
@@ -45,10 +78,18 @@ def start_server():
         while running:
             try:
                 client_socket, addr = server_socket.accept()
-                client_id = str(uuid.uuid4())
-                clients[client_id] = client_socket
-                print(f"Client {client_id} connected from {addr}")
-                threading.Thread(target=handle_client, args=(client_socket, client_id)).start()
+                if len(clients) < 2:
+                    client_id = str(uuid.uuid4())
+                    clients[client_id] = client_socket
+                    print(f"Client {client_id} connected from {addr}")
+                    if len(clients) == 1:
+                        game_state['current_turn'] = client_id
+                    threading.Thread(target=handle_client, args=(client_socket, client_id)).start()
+                    broadcast_message({'type': 'join', 'client_id': client_id})
+                    broadcast_message({'type': 'update', 'game_state': game_state})
+                else:
+                    client_socket.sendall(json.dumps({'type': 'error', 'message': 'Game is full.'}).encode())
+                    client_socket.close()
             except socket.error:
                 break
 
@@ -61,4 +102,5 @@ def start_server():
     print("Server stopped.")
 
 if __name__ == "__main__":
+    reset_game_state()
     start_server()
