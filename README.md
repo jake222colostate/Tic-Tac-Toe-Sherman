@@ -1,4 +1,4 @@
-#Last Updated for Sprint 5
+Last Updated for Sprint 5
 ### Message Structure
 - `{ "message": "some text" }`
 
