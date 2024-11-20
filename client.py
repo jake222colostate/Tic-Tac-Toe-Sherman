@@ -10,11 +10,15 @@ def receive_messages(client_socket):
         try:
             message = client_socket.recv(1024).decode()
             if not message:
+                print("Disconnected from the server.")
                 break
-            data = json.loads(message)
-            handle_server_message(data)
+            try:
+                data = json.loads(message)
+                handle_server_message(data)
+            except json.JSONDecodeError:
+                print("Received invalid message from the server.")
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error receiving message: {e}")
             break
 
 def handle_server_message(data):
@@ -30,10 +34,15 @@ def handle_server_message(data):
         print(f"Player {data['winner']} wins!")
     elif data['type'] == 'draw':
         print("The game ended in a draw.")
+    elif data['type'] == 'error':
+        print(f"Error: {data['message']}")
 
 def send_move(client_socket, move):
-    message = {'type': 'move', 'move': move}
-    client_socket.sendall(json.dumps(message).encode())
+    try:
+        message = {'type': 'move', 'move': move}
+        client_socket.sendall(json.dumps(message).encode())
+    except Exception as e:
+        print(f"Error sending move: {e}")
 
 def print_board(board):
     for i in range(0, 9, 3):
