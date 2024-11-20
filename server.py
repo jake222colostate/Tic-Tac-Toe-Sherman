@@ -11,7 +11,10 @@ running = True
 
 def broadcast_message(message):
     for client in clients.values():
-        client.sendall(json.dumps(message).encode())
+        try:
+            client.sendall(json.dumps(message).encode())
+        except Exception as e:
+            print(f"Error sending message to client: {e}")
 
 def reset_game_state():
     global game_state
@@ -38,10 +41,13 @@ def handle_client(client_socket, client_id):
             message = client_socket.recv(1024).decode()
             if not message:
                 break
-            data = json.loads(message)
-            handle_message(data, client_socket, client_id)
+            try:
+                data = json.loads(message)
+                handle_message(data, client_socket, client_id)
+            except json.JSONDecodeError:
+                client_socket.sendall(json.dumps({'type': 'error', 'message': 'Invalid message format.'}).encode())
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Unexpected error: {e}")
     finally:
         client_socket.close()
         clients.pop(client_id, None)
@@ -90,8 +96,8 @@ def start_server():
                 else:
                     client_socket.sendall(json.dumps({'type': 'error', 'message': 'Game is full.'}).encode())
                     client_socket.close()
-            except socket.error:
-                break
+            except socket.error as e:
+                print(f"Socket error: {e}")
 
     threading.Thread(target=accept_clients).start()
 
@@ -104,3 +110,4 @@ def start_server():
 if __name__ == "__main__":
     reset_game_state()
     start_server()
+    
