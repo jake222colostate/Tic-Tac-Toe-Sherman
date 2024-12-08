@@ -7,6 +7,12 @@ To start the server, run:
 ```bash
 python server.py
 ```
+## Write Up / Final Assesment
+There is still a lot that needs to be done on my project.  For starters, I had trouble using a nonstatic IP address
+for connecting seperate clients to the server, so I would work on that next.  I would also make a nice looking
+functional webpage to play the game on.
+
+-For the most part, all of my project went right.  Minus the static IP address issue, my project works smoothly and as intended.  One thing that could be improved on is placing a tile on the last moves that declares a win, opposed to just a message being sent to the client expressing that a user won. 
 
 ## Running the Client
 To start the client, run:
@@ -36,17 +42,17 @@ python client.py
 
 
 # Statement of Work
-## Project Title: Jakes Hardcore Connect Four
+## Project Title: Jake's TeamTryMyBest Tic-Tac-Toe.
 
 Team:
 [Jake S]
 
 Project Objective:
-[I personally am hoping to create a functional conntect four game.]
+[I personally am hoping to create a functional Tic-Tac-Toe game.]
 
 Scope:
 Inclusions:
-[Connect four tiles in a row, or diagnoally to win!]
+[Get three Tiles in a row in a straight line or diagonally.]
 Exclusions:
 [N/A at the moment]
 Deliverables:
